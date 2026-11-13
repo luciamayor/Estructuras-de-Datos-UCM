@@ -1,0 +1,201 @@
+fmod PILA{X :: TRIV} is
+
+  sort Pila{X} .
+
+  op errorPila : -> [Pila{X}] .
+  op errorElemPila : -> [X$Elt] .
+
+  op pila-vacia : -> Pila{X} [ctor] .
+  op apilar : X$Elt Pila{X} -> Pila{X} [ctor] .
+
+  op desapilar : Pila{X} ~> Pila{X} .
+  op cima : Pila{X} ~> X$Elt .
+  op es-pila-vacia? : Pila{X} -> Bool .
+
+  var P : Pila{X} .
+  var E : X$Elt .
+
+  eq desapilar(pila-vacia) = errorPila .
+  eq desapilar(apilar(E,P)) = P .
+  eq cima(pila-vacia) = errorElemPila .
+  eq cima(apilar(E,P)) = E .
+  eq es-pila-vacia?(pila-vacia) = true .
+  eq es-pila-vacia?(apilar(E,P)) = false .
+
+endfm
+
+
+view vInt from TRIV to INT is 
+  sort Elt to Int .
+endv
+
+
+fmod PILA-ENTEROS is 
+  including PILA{vInt} .
+endfm
+
+
+
+--- red cima(pila-vacia) .
+--- red cima(apilar(0,pila-vacia)) .
+--- red cima(apilar(3,apilar(-6,pila-vacia))) .
+--- red desapilar(apilar(3,apilar(-6,apilar(5,pila-vacia)))) .
+--- red desapilar(pila-vacia) .
+--- red desapilar(apilar(4,pila-vacia)) .
+
+
+
+fmod SECUENCIA{X :: TRIV} is
+
+  protecting PILA{X} .
+
+  sort Secuencia{X} .
+
+  op errorSecuencia : -> [Secuencia{X}] .
+  op errorElemSecuencia : -> [X$Elt] .
+
+  op crear : -> Secuencia{X} .
+  op insertar : Secuencia{X} X$Elt -> Secuencia{X} .
+  op eliminar : Secuencia{X} ~> Secuencia{X} .
+  op actual : Secuencia{X} ~> X$Elt .
+  op avanzar : Secuencia{X} ~> Secuencia{X} .
+  op reiniciar : Secuencia{X} -> Secuencia{X} .
+  op fin? : Secuencia{X} -> Bool .
+  op es-sec-vacia? : Secuencia{X} -> Bool .
+
+  op <_,_> : Pila{X} Pila{X} -> Secuencia{X} [ctor] .
+
+  var E : X$Elt .
+  vars IZ DR : Pila{X} .
+
+  eq crear = < pila-vacia, pila-vacia > .
+  eq insertar(< IZ, DR >, E) = < apilar(E, IZ), DR > .
+
+  --- Eliminar el elemento actual; error si se esta al final.
+
+  eq eliminar(< IZ, pila-vacia >) = errorSecuencia .
+  eq eliminar(< IZ, apilar(E, DR) >) = < IZ, DR > .
+
+  --- Consultar el elemento actual; error si se esta al final.
+
+  eq actual(< IZ, pila-vacia >) = errorElemSecuencia .
+  eq actual(< IZ, apilar(E, DR) >) = E .
+
+  --- Avanzar el punto de interes; error si se esta al final.
+
+  eq avanzar(< IZ, pila-vacia >) = errorSecuencia .
+  eq avanzar(< IZ, apilar(E, DR) >) = < apilar(E, IZ), DR > .
+
+  --- Reiniciar: mover todos los elementos de IZ a DR.
+
+  eq reiniciar(< pila-vacia, DR >) = < pila-vacia, DR > .
+  eq reiniciar(< apilar(E, IZ), DR >) =
+    reiniciar(< IZ, apilar(E, DR) >) .
+
+  eq fin?(< IZ, DR >) = es-pila-vacia?(DR) .
+  eq es-sec-vacia?(< IZ, DR >) =
+    es-pila-vacia?(IZ) and es-pila-vacia?(DR) .
+
+endfm
+
+
+--- La vista vInt ya esta definida en pilas.maude.
+
+fmod SECUENCIA-ENTEROS is
+  protecting SECUENCIA{vInt} .
+endfm
+
+
+
+--- 1. Crear una secuencia vacia.
+red in SECUENCIA-ENTEROS : crear .
+--- Esperado: < pila-vacia, pila-vacia >
+
+--- 2. Una secuencia recien creada esta vacia y al final.
+red in SECUENCIA-ENTEROS : es-sec-vacia?(crear) .
+--- Esperado: true
+red in SECUENCIA-ENTEROS : fin?(crear) .
+--- Esperado: true
+
+--- 3. Insertar en la secuencia vacia: se inserta ANTES del punto.
+red in SECUENCIA-ENTEROS : insertar(crear, 10) .
+--- Esperado: < apilar(10,pila-vacia), pila-vacia >
+red in SECUENCIA-ENTEROS : es-sec-vacia?(insertar(crear,10)) .
+--- Esperado: false
+red in SECUENCIA-ENTEROS : fin?(insertar(crear,10)) .
+--- Esperado: true (se mantiene el punto de interes al final)
+
+--- 4. Construir la secuencia [10,20,30], con punto al final.
+red in SECUENCIA-ENTEROS :
+  insertar(insertar(insertar(crear,10),20),30) .
+--- Esperado: < apilar(30,apilar(20,apilar(10,pila-vacia))), pila-vacia >
+
+--- 5. Reiniciar coloca el punto de interes sobre el primer elemento.
+red in SECUENCIA-ENTEROS :
+  reiniciar(insertar(insertar(insertar(crear,10),20),30)) .
+--- Esperado: < pila-vacia, apilar(10,apilar(20,apilar(30,pila-vacia))) >
+
+--- 6. Consultar el primer elemento despues de reiniciar.
+red in SECUENCIA-ENTEROS :
+  actual(reiniciar(insertar(insertar(insertar(crear,10),20),30))) .
+--- Esperado: 10
+
+--- 7. Avanzar una vez y consultar el nuevo elemento actual.
+red in SECUENCIA-ENTEROS :
+  actual(avanzar(reiniciar(insertar(insertar(insertar(crear,10),20),30)))) .
+--- Esperado: 20
+
+--- 8. Avanzar dos veces y consultar el tercer elemento.
+red in SECUENCIA-ENTEROS :
+  actual(avanzar(avanzar(reiniciar(insertar(insertar(insertar(crear,10),20),30))))) .
+--- Esperado: 30
+
+--- 9. Eliminar el elemento actual al comienzo: [10,20,30] -> [20,30].
+red in SECUENCIA-ENTEROS :
+  eliminar(reiniciar(insertar(insertar(insertar(crear,10),20),30))) .
+--- Esperado: < pila-vacia, apilar(20,apilar(30,pila-vacia)) >
+
+--- 10. Insertar antes del elemento actual (20).
+red in SECUENCIA-ENTEROS :
+  insertar(avanzar(reiniciar(insertar(insertar(insertar(crear,10),20),30))),15) .
+--- Esperado: < apilar(15,apilar(10,pila-vacia)), apilar(20,apilar(30,pila-vacia)) >
+
+--- 11. Reiniciar no cambia el orden de los elementos.
+red in SECUENCIA-ENTEROS :
+  reiniciar(< apilar(20,apilar(10,pila-vacia)), apilar(30,pila-vacia) >) .
+--- Esperado: < pila-vacia, apilar(10,apilar(20,apilar(30,pila-vacia))) >
+
+--- 12. Reiniciar dos veces equivale a reiniciar una vez.
+red in SECUENCIA-ENTEROS :
+  reiniciar(reiniciar(< apilar(20,apilar(10,pila-vacia)), apilar(30,pila-vacia) >)) .
+--- Esperado: < pila-vacia, apilar(10,apilar(20,apilar(30,pila-vacia))) >
+
+--- 13. Secuencia no vacia cuyo punto de interes esta al final.
+red in SECUENCIA-ENTEROS :
+  fin?(< apilar(10,pila-vacia), pila-vacia >) .
+--- Esperado: true
+red in SECUENCIA-ENTEROS :
+  es-sec-vacia?(< apilar(10,pila-vacia), pila-vacia >) .
+--- Esperado: false
+
+--- 14. Errores por operar sobre una secuencia vacia o al final.
+red in SECUENCIA-ENTEROS : actual(crear) .
+--- Esperado: errorElemSecuencia
+red in SECUENCIA-ENTEROS : eliminar(crear) .
+--- Esperado: errorSecuencia
+red in SECUENCIA-ENTEROS : avanzar(crear) .
+--- Esperado: errorSecuencia
+
+--- 15. Avanzar hasta el final de una secuencia unitaria.
+red in SECUENCIA-ENTEROS :
+  fin?(avanzar(reiniciar(insertar(crear,7)))) .
+--- Esperado: true
+
+--- 16. Consultar tras eliminar el primer elemento.
+red in SECUENCIA-ENTEROS :
+  actual(eliminar(reiniciar(insertar(insertar(crear,10),20)))) .
+--- Esperado: 20
+
+--- 17. Reiniciar una secuencia vacia es la identidad.
+red in SECUENCIA-ENTEROS : reiniciar(crear) .
+--- Esperado: < pila-vacia, pila-vacia >

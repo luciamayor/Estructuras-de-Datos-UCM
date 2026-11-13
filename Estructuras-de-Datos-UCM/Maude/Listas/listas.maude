@@ -1,0 +1,96 @@
+
+fmod LISTA{X :: TRIV} is
+
+  protecting NAT .
+
+  sort Lista{X} .
+
+  op errorLista : -> [Lista{X}] [ctor] .
+  op errorElt : -> [X$Elt] [ctor] .
+
+  op lista-vacia : -> Lista{X} [ctor] .
+  op poner-izq : X$Elt Lista{X} -> Lista{X} [ctor] .
+  op poner-der : Lista{X} X$Elt -> Lista{X} .
+  op concat : Lista{X} Lista{X} -> Lista{X} .
+  op longitud : Lista{X} -> Nat .
+  op prim-izq : Lista{X} -> [X$Elt] .
+  op elim-izq : Lista{X} -> [Lista{X}] .
+  op prim-der : Lista{X} -> [X$Elt] .
+  op elim-der : Lista{X} -> [Lista{X}] .
+  op es-lista-vacia? : Lista{X} -> Bool .
+
+  --- La pertenencia requiere igualdad sobre los elementos.
+
+  op esta? : Lista{X} X$Elt -> Bool .
+  op inversa : Lista{X} -> Lista{X} .
+
+  vars c d : Lista{X} .
+  vars e f : X$Elt .
+
+  eq [poner-der1] : poner-der(lista-vacia,e) = poner-izq(e,lista-vacia) .
+  eq [poner-der2] : poner-der(poner-izq(e,c),f) = poner-izq(e,poner-der(c,f)) .
+
+  eq [concat1] : concat(lista-vacia,c) = c .
+  eq [concat2] : concat(poner-izq(e,c),d) = poner-izq(e,concat(c,d)) .
+
+  eq [longitud1] : longitud(lista-vacia) = 0 .
+  eq [longitud2] : longitud(poner-izq(e,c)) = 1 + longitud(c) .
+
+  eq [prim-izq1] : prim-izq(lista-vacia) = errorElt .
+  eq [prim-izq2] : prim-izq(poner-izq(e,c)) = e .
+
+  eq [elim-izq1] : elim-izq(lista-vacia) = errorLista .
+  eq [elim-izq2] : elim-izq(poner-izq(e,c)) = c .
+
+  eq [prim-der1] : prim-der(lista-vacia) = errorElt .
+  eq [prim-der2] : prim-der(poner-izq(e,lista-vacia)) = e .
+  eq [prim-der3] : prim-der(poner-izq(e,poner-izq(f,c))) = prim-der(poner-izq(f,c)) .
+
+  eq [elim-der1] : elim-der(lista-vacia) = errorLista .
+  eq [elim-der2] : elim-der(poner-izq(e,lista-vacia)) = lista-vacia .
+  eq [elim-der3] : elim-der(poner-izq(e,poner-izq(f,c))) = poner-izq(e,elim-der(poner-izq(f,c))) .
+
+  eq [es-lista-vacia1] : es-lista-vacia?(lista-vacia) = true .
+  eq [es-lista-vacia2] : es-lista-vacia?(poner-izq(e,c)) = false .
+
+  eq [esta1] : esta?(lista-vacia,e) = false .
+  eq [esta2] : esta?(poner-izq(f,c),e) = (e == f) or esta?(c,e) .
+
+  eq [inversa1] : inversa(lista-vacia) = lista-vacia .
+  eq [inversa2] : inversa(poner-izq(e,c)) = poner-der(inversa(c),e) .
+
+endfm
+
+
+view vInt from TRIV to INT is
+  sort Elt to Int .
+endv
+
+
+fmod Listas-ENTEROS is
+  protecting LISTA{vInt} .
+endfm
+
+
+
+red in Listas-ENTEROS : longitud(lista-vacia) . --- 0
+red in Listas-ENTEROS : es-lista-vacia?(lista-vacia) . --- true
+red in Listas-ENTEROS : es-lista-vacia?(poner-izq(1,lista-vacia)) . --- false
+red in Listas-ENTEROS : longitud(poner-izq(1,poner-izq(2,poner-izq(3,lista-vacia)))) . --- 3
+red in Listas-ENTEROS : prim-izq(poner-izq(1,poner-izq(2,lista-vacia))) . --- 1
+red in Listas-ENTEROS : prim-der(poner-izq(1,poner-izq(2,poner-izq(3,lista-vacia)))) . --- 3
+red in Listas-ENTEROS : elim-izq(poner-izq(1,poner-izq(2,lista-vacia))) . --- [2]
+red in Listas-ENTEROS : elim-der(poner-izq(1,poner-izq(2,poner-izq(3,lista-vacia)))) . --- [1,2]
+red in Listas-ENTEROS : poner-der(poner-izq(1,poner-izq(2,lista-vacia)),3) . --- [1,2,3]
+red in Listas-ENTEROS : concat(poner-izq(1,poner-izq(2,lista-vacia)),poner-izq(3,lista-vacia)) . --- [1,2,3]
+red in Listas-ENTEROS : concat(lista-vacia,poner-izq(1,lista-vacia)) . --- [1]
+red in Listas-ENTEROS : concat(poner-izq(1,lista-vacia),lista-vacia) . --- [1]
+red in Listas-ENTEROS : esta?(poner-izq(1,poner-izq(2,lista-vacia)),2) . --- true
+red in Listas-ENTEROS : esta?(poner-izq(1,poner-izq(2,lista-vacia)),7) . --- false
+red in Listas-ENTEROS : inversa(poner-izq(1,poner-izq(2,poner-izq(3,lista-vacia)))) . --- [3,2,1]
+red in Listas-ENTEROS : inversa(inversa(poner-izq(1,poner-izq(2,lista-vacia)))) . --- [1,2]
+red in Listas-ENTEROS : longitud(concat(poner-izq(1,lista-vacia),poner-izq(2,poner-izq(3,lista-vacia)))) . --- 3
+red in Listas-ENTEROS : prim-izq(lista-vacia) . --- errorElt
+red in Listas-ENTEROS : prim-der(lista-vacia) . --- errorElt
+red in Listas-ENTEROS : elim-izq(lista-vacia) . --- errorLista
+red in Listas-ENTEROS : elim-der(lista-vacia) . --- errorLista

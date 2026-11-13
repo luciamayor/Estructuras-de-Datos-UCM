@@ -1,0 +1,71 @@
+fmod ABB{X :: STRICT-WEAK-ORDER} is
+
+  sort Abb{X} .
+
+  op errorElemento : -> [X$Elt] .
+  op abb-vacio     : -> Abb{X} [ctor] .
+
+  op plantar       : Abb{X} X$Elt Abb{X} -> Abb{X} [ctor] .
+  op insertar      : X$Elt Abb{X} -> Abb{X} .
+  op esta?         : X$Elt Abb{X} -> Bool .
+  op minimo        : Abb{X} -> X$Elt .
+  op maximo        : Abb{X} -> X$Elt .
+  op eliminar      : X$Elt Abb{X} -> Abb{X} .
+  op es-abb-vacio? : Abb{X} -> Bool .
+
+  vars e f   : X$Elt .
+  vars iz dr : Abb{X} .
+
+  eq  insertar(e, abb-vacio)          = plantar(abb-vacio, e, abb-vacio) .
+  eq  insertar(e, plantar(iz, e, dr)) = plantar(iz, e, dr) .
+  ceq insertar(e, plantar(iz, f, dr)) = plantar(insertar(e, iz), f, dr) if e < f .
+  ceq insertar(e, plantar(iz, f, dr)) = plantar(iz, f, insertar(e, dr)) if f < e .
+
+  eq  esta?(e, abb-vacio)          = false .
+  eq  esta?(e, plantar(iz, e, dr)) = true .
+  ceq esta?(e, plantar(iz, f, dr)) = esta?(e, iz) if e < f .
+  ceq esta?(e, plantar(iz, f, dr)) = esta?(e, dr) if f < e .
+
+  eq  minimo(abb-vacio)                 = errorElemento .
+  eq  minimo(plantar(abb-vacio, e, dr)) = e .
+  ceq minimo(plantar(iz, e, dr))        = minimo(iz) if not es-abb-vacio?(iz) .
+
+  eq  maximo(abb-vacio)                 = errorElemento .
+  eq  maximo(plantar(iz, e, abb-vacio)) = e .
+  ceq maximo(plantar(iz, e, dr))        = maximo(dr) if not es-abb-vacio?(dr) .
+
+  eq  eliminar(e, abb-vacio)                 = abb-vacio .
+  eq  eliminar(e, plantar(iz, e, abb-vacio)) = iz .
+  eq  eliminar(e, plantar(abb-vacio, e, dr)) = dr .
+  ceq eliminar(e, plantar(iz, e, dr))        = plantar(iz, minimo(dr), eliminar(minimo(dr), dr))
+    if not es-abb-vacio?(iz) /\ not es-abb-vacio?(dr) .
+  ceq eliminar(e, plantar(iz, f, dr))        = plantar(eliminar(e, iz), f, dr) if e < f .
+  ceq eliminar(e, plantar(iz, f, dr))        = plantar(iz, f, eliminar(e, dr)) if f < e .
+
+  eq es-abb-vacio?(abb-vacio) = true .
+  eq es-abb-vacio?(plantar(iz, e, dr)) = false .
+
+endfm
+
+
+view vNatABB from STRICT-WEAK-ORDER to NAT is
+  sort Elt to Nat .
+endv
+
+
+fmod ABB-NAT is
+  protecting ABB{vNatABB} .
+endfm
+
+
+
+red in ABB-NAT : es-abb-vacio?(abb-vacio) .
+red in ABB-NAT : insertar(5, insertar(2, insertar(8, abb-vacio))) .
+red in ABB-NAT : esta?(2, insertar(5, insertar(2, insertar(8, abb-vacio)))) .
+red in ABB-NAT : esta?(7, insertar(5, insertar(2, insertar(8, abb-vacio)))) .
+red in ABB-NAT : minimo(insertar(5, insertar(2, insertar(8, abb-vacio)))) .
+red in ABB-NAT : maximo(insertar(5, insertar(2, insertar(8, abb-vacio)))) .
+red in ABB-NAT : eliminar(5, insertar(5, insertar(2, insertar(8, abb-vacio)))) .
+red in ABB-NAT : minimo(abb-vacio) .
+
+

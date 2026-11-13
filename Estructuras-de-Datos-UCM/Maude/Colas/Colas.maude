@@ -1,0 +1,40 @@
+fmod COLA{X :: TRIV} is
+  sort Cola{X} .
+  op error : -> Cola{X} .
+  op error : -> X$Elt .
+  op cola-vacia : -> Cola{X} [ctor] .
+  op pedir-vez : Cola{X} X$Elt -> Cola{X} [ctor] .
+  op avanzar : Cola{X} -> Cola{X} .
+  op primero : Cola{X} -> X$Elt .
+  op es-cola-vacia? : Cola{X} -> Bool .
+  var C : Cola{X} .
+  var E : X$Elt .
+  eq avanzar(cola-vacia) = error .
+  ceq avanzar(pedir-vez(C,E)) = cola-vacia if es-cola-vacia?(C) .
+  ceq avanzar(pedir-vez(C,E)) = pedir-vez(avanzar(C),E) if not es-cola-vacia?(C) .
+  eq primero(cola-vacia) = error .
+  ceq primero(pedir-vez(C,E)) = E if es-cola-vacia?(C) .
+  ceq primero(pedir-vez(C,E)) = primero(C) if not es-cola-vacia?(C) .
+  eq es-cola-vacia?(cola-vacia) = true .
+  eq es-cola-vacia?(pedir-vez(C,E)) = false . 
+endfm
+
+view Int from TRIV to INT is 
+  sort Elt to Int .
+endv
+
+fmod COLA-ENTEROS is 
+  protecting COLA{Int} .
+endfm
+
+red primero(pedir-vez(pedir-vez(cola-vacia,5),4)) .
+
+view Caracteres from TRIV to STRING is 
+  sort Elt to Char .
+endv
+
+fmod COLA-CARACTERES is 
+  protecting COLA{Caracteres} .
+endfm
+
+red primero(pedir-vez(pedir-vez(cola-vacia,"d"),"c")) .

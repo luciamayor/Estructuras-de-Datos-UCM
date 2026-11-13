@@ -1,0 +1,136 @@
+
+
+--- TAD generico de conjuntos finitos.
+--- Requiere que los elementos tengan una igualdad decidible (==).
+
+
+fmod CONJUNTO{X :: TRIV} is
+
+  protecting NAT .
+
+  sort Conjunto{X} .
+
+  op cjto-vacio :                   -> Conjunto{X} [ctor] .
+  op anadir     : X$Elt Conjunto{X} -> Conjunto{X} [ctor] .
+
+  op esta?          : X$Elt Conjunto{X}       -> Bool .
+  op es-cjto-vacio? : Conjunto{X}             -> Bool .
+  op cardinal       : Conjunto{X}             -> Nat .
+  op union          : Conjunto{X} Conjunto{X} -> Conjunto{X} .
+  op interseccion   : Conjunto{X} Conjunto{X} -> Conjunto{X} .
+  op diferencia     : Conjunto{X} Conjunto{X} -> Conjunto{X} .
+  op incluido?      : Conjunto{X} Conjunto{X} -> Bool .
+  op iguales?       : Conjunto{X} Conjunto{X} -> Bool .
+
+  vars E F : X$Elt .
+  vars S T : Conjunto{X} .
+
+  eq esta?(E, cjto-vacio)   = false .
+  eq esta?(E, anadir(F, S)) = (E == F) or esta?(E, S) .
+
+  eq es-cjto-vacio?(cjto-vacio)   = true .
+  eq es-cjto-vacio?(anadir(E, S)) = false .
+
+  --- Se cuentan los elementos distintos, aunque un termino repita elementos.
+
+  eq cardinal(cjto-vacio)   = 0 .
+  eq cardinal(anadir(E, S)) =
+    if esta?(E, S) then cardinal(S) else s(cardinal(S)) fi .
+
+  eq union(cjto-vacio, T)   = T .
+  eq union(anadir(E, S), T) = anadir(E, union(S, T)) .
+
+  eq interseccion(cjto-vacio, T)   = cjto-vacio .
+  eq interseccion(anadir(E, S), T) =
+    if esta?(E, T)
+    then anadir(E, interseccion(S, T))
+    else interseccion(S, T) fi .
+
+  eq diferencia(cjto-vacio, T)   = cjto-vacio .
+  eq diferencia(anadir(E, S), T) =
+    if esta?(E, T)
+    then diferencia(S, T)
+    else anadir(E, diferencia(S, T)) fi .
+
+  --- Igualdad extensional, independiente del orden y las repeticiones.
+
+  eq incluido?(cjto-vacio, T)   = true .
+  eq incluido?(anadir(E, S), T) = esta?(E, T) and incluido?(S, T) .
+
+  eq iguales?(S, T) = incluido?(S, T) and incluido?(T, S) .
+
+endfm
+
+
+view vInt from TRIV to INT is
+  sort Elt to Int .
+endv
+
+
+fmod CONJUNTO-ENTEROS is
+  protecting CONJUNTO{vInt} .
+endfm
+
+
+red in CONJUNTO-ENTEROS : esta?(1, anadir(1, cjto-vacio)) .
+
+red in CONJUNTO-ENTEROS : cardinal(anadir(1, anadir(1, cjto-vacio))) .
+
+red in CONJUNTO-ENTEROS :
+	iguales?(anadir(1, anadir(-2, cjto-vacio)),
+                 anadir(-2, anadir(1, cjto-vacio))) .
+
+red in CONJUNTO-ENTEROS :
+  esta?(3, cjto-vacio) .
+
+red in CONJUNTO-ENTEROS :
+  esta?(-2, anadir(4, anadir(-2, cjto-vacio))) .
+
+red in CONJUNTO-ENTEROS :
+  esta?(0, anadir(4, anadir(-2, cjto-vacio))) .
+
+red in CONJUNTO-ENTEROS :
+  cardinal(anadir(3, anadir(3, anadir(-1, cjto-vacio)))) .
+
+red in CONJUNTO-ENTEROS :
+  iguales?(anadir(1, anadir(2, cjto-vacio)),
+           anadir(2, anadir(1, cjto-vacio))) .
+
+red in CONJUNTO-ENTEROS :
+  iguales?(anadir(1, anadir(1, cjto-vacio)),
+           anadir(1, cjto-vacio)) .
+
+red in CONJUNTO-ENTEROS :
+  incluido?(anadir(-1, cjto-vacio),
+            anadir(2, anadir(-1, cjto-vacio))) .
+
+red in CONJUNTO-ENTEROS :
+  iguales?(
+    union(anadir(1, anadir(2, cjto-vacio)),
+          anadir(2, anadir(3, cjto-vacio))),
+    anadir(1, anadir(2, anadir(3, cjto-vacio)))) .
+
+
+red in CONJUNTO-ENTEROS :
+  cardinal(
+    union(anadir(1, anadir(2, cjto-vacio)),
+          anadir(2, anadir(3, cjto-vacio)))) .
+
+red in CONJUNTO-ENTEROS :
+  iguales?(
+    interseccion(anadir(-1, anadir(2, cjto-vacio)),
+                 anadir(2, anadir(5, cjto-vacio))),
+    anadir(2, cjto-vacio)) .
+
+
+red in CONJUNTO-ENTEROS :
+  es-cjto-vacio?(
+    interseccion(anadir(1, cjto-vacio),
+                 anadir(2, cjto-vacio))) .
+
+red in CONJUNTO-ENTEROS :
+  iguales?(
+    diferencia(anadir(1, anadir(2, anadir(3, cjto-vacio))),
+               anadir(2, cjto-vacio)),
+    anadir(1, anadir(3, cjto-vacio))) .
+

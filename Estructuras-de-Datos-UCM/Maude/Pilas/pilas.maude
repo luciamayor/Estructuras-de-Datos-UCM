@@ -1,0 +1,33 @@
+fmod PILA{X :: TRIV} is
+  sort Pila{X} .
+  op errorPila : -> [Pila{X}] .
+  op errorElemPila : -> [X$Elt] .
+  op pila-vacia : -> Pila{X} [ctor] .
+  op apilar : X$Elt Pila{X} -> Pila{X} [ctor] .
+  op desapilar : Pila{X} ~> Pila{X} .
+  op cima : Pila{X} ~> X$Elt .
+  op es-pila-vacia? : Pila{X} -> Bool .
+  var P : Pila{X} .
+  var E : X$Elt .
+  eq desapilar(pila-vacia) = errorPila .
+  eq desapilar(apilar(E,P)) = P .
+  eq cima(pila-vacia) = errorElemPila .
+  eq cima(apilar(E,P)) = E .
+  eq es-pila-vacia?(pila-vacia) = true .
+  eq es-pila-vacia?(apilar(E,P)) = false .
+endfm
+
+view vInt from TRIV to INT is 
+  sort Elt to Int .
+endv
+
+fmod PILA-ENTEROS is 
+  including PILA{vInt} .
+endfm
+
+--- red cima(pila-vacia) .
+--- red cima(apilar(0,pila-vacia)) .
+--- red cima(apilar(3,apilar(-6,pila-vacia))) .
+--- red desapilar(apilar(3,apilar(-6,apilar(5,pila-vacia)))) .
+--- red desapilar(pila-vacia) .
+--- red desapilar(apilar(4,pila-vacia)) .
